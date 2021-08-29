@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const socket = require('socket.io');
 const http = require('http');
@@ -5,12 +6,28 @@ const app = express();
 const cors = require('cors');
 const morgan = require('morgan');
 const httpServer = http.createServer(app);
+const createError = require('http-errors');
+const cookieParser = require('cookie-parser');
+const route = require('./src/routes/index');
 
 //middleware
 app.use(cors());
 app.use(morgan('dev'));
 app.get('/', (req, res) => {
   res.json({ message: 'success' });
+});
+app.use(express.json());
+app.use(route);
+app.use(express.urlencoded({ extended: false }));
+app.use('*', (req, res, next) => {
+  const error = new createError.NotFound();
+  next(error);
+});
+app.use((err, req, res, next) => {
+  console.error(err);
+  res.status(err.status || 500).json({
+    message: err.message,
+  });
 });
 
 //socket
@@ -33,7 +50,6 @@ io.on('connection', (socket) => {
     console.log('Ada perangkat yang terputus', socket.id);
   });
 });
-
-httpServer.listen(4000, () => {
-  console.log('Server is running on port' + 4000);
+httpServer.listen(process.env.PORT, () => {
+  console.log('Server is running on port ' + process.env.PORT);
 });
