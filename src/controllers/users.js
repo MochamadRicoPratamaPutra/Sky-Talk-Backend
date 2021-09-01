@@ -16,23 +16,22 @@ const getAllUser = (req, res, next) => {
   const sort = req.query.sort;
   // const sortBy = sort.toUpperCase()
   const userRole = req.role;
-  if (userRole === 'admin') {
-    const keyword = req.query.keyword;
-    userModel
-      .getAllUser(page, limit, column, search, sort, keyword)
-      .then((result) => {
-        const users = result;
-        helpers.response(res, users, 200);
-      })
-      .catch((error) => {
-        console.log(error);
-        const errorMessage = new createError.InternalServerError();
-        next(errorMessage);
+  const keyword = req.query.keyword;
+  userModel
+    .getAllUser(page, limit, column, search, sort, keyword)
+    .then((result) => {
+      const friends = result.filter((item) => {
+        if (item.id != req.id) {
+          return item;
+        }
       });
-  } else {
-    const errorMessage = new createError.Forbidden();
-    next(errorMessage);
-  }
+      helpers.response(res, friends, 200);
+    })
+    .catch((error) => {
+      console.log(error);
+      const errorMessage = new createError.InternalServerError();
+      next(errorMessage);
+    });
 };
 const getUserById = (req, res, next) => {
   const id = req.params.idsaya;
@@ -55,17 +54,15 @@ const updateUser = (req, res, next) => {
   const id = req.params.id;
   const userRole = req.role;
   const userId = req.id;
-  const { name, email, phone, bio, username } = req.body;
+  const { name, phone, bio, username } = req.body;
   if (userRole === 'user') {
     if (id === userId) {
       const data = {
-        id: uuidv4(),
         name: name,
-        email: email,
         phone: phone,
         bio: bio,
         username: username,
-        profilePicture: `${process.env.BASE_URL}/file/${req.file.filename}` || null,
+        img: `${process.env.BASE_URL}/file/${req.file.filename}` || null,
         updatedAt: new Date(),
       };
       userModel
@@ -175,8 +172,6 @@ const forgotPassword = async (req, res, next) => {
         const data = {
           password: hash,
         };
-        console.log(data);
-        console.log(email);
         userModel
           .updateUserByEmail(email, data)
           .then((result) => {
@@ -203,11 +198,8 @@ const register = async (req, res, next) => {
   if (user.length > 0) {
     return helpers.response(res, null, 401, { message: 'email already registered' });
   }
-  console.log(user);
   bcrypt.genSalt(10, function (err, salt) {
     bcrypt.hash(password, salt, function (err, hash) {
-      // Store hash in your password DB.
-      console.log(hash);
       const data = {
         id: uuidv4(),
         name: name,
@@ -251,32 +243,9 @@ const login = async (req, res, next) => {
         jwt.sign(
           { email: user.email, role: user.role, id: user.id },
           process.env.SECRET_KEY,
-          { expiresIn: 60 * 60 },
+          { expiresIn: '24h' },
           function (err, token) {
-            // console.log(token)
-            // console.log(process.env.SECRET_KEY)
             delete user.password;
-            res.cookie('token', token, {
-              // httpOnly: true,
-              maxAge: 1000 * 60 * 60 * 60,
-              secure: true,
-              path: '/',
-              sameSite: 'strict',
-            });
-            res.cookie('role', user.role, {
-              // httpOnly: true,
-              maxAge: 1000 * 60 * 60 * 60,
-              secure: true,
-              path: '/',
-              sameSite: 'strict',
-            });
-            res.cookie('id', user.id, {
-              // httpOnly: true,
-              maxAge: 1000 * 60 * 60 * 60,
-              secure: true,
-              path: '/',
-              sameSite: 'strict',
-            });
             user.token = token;
             helpers.response(res, user, 200);
           }
@@ -294,7 +263,6 @@ const login = async (req, res, next) => {
 module.exports = {
   getAllUser,
   getUserById,
-  // insertUser,
   updateUser,
   deleteUser,
   register,

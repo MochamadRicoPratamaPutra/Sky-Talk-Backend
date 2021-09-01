@@ -7,9 +7,12 @@ const cors = require('cors');
 const morgan = require('morgan');
 const httpServer = http.createServer(app);
 const createError = require('http-errors');
+const moment = require('moment');
+moment.locale('id');
 const cookieParser = require('cookie-parser');
 const route = require('./src/routes/index');
-
+const jwt = require('jsonwebtoken');
+const modelMessage = require('./src/models/message');
 //middleware
 app.use(cors());
 app.use(morgan('dev'));
@@ -19,6 +22,7 @@ app.get('/', (req, res) => {
 app.use(express.json());
 app.use(route);
 app.use(express.urlencoded({ extended: false }));
+app.use('/file', express.static('./src/upload'));
 app.use('*', (req, res, next) => {
   const error = new createError.NotFound();
   next(error);
@@ -37,17 +41,58 @@ const option = {
   },
 };
 const io = socket(httpServer, option);
+io.use((socket, next) => {
+  const token = socket.handshake.query.token;
+  console.log(token);
+  jwt.verify(token, process.env.SECRET_KEY, function (err, decoded) {
+    if (err) {
+      if (err.name === 'TokenExpiredError') {
+        const error = new Error('token expired');
+        console.log(error);
+        error.status = 401;
+        return next(error);
+      } else if (err.name === 'JsonWebTokenError') {
+        const error = new Error('token invalid');
+        console.log(error);
+        error.status = 401;
+        return next(error);
+      } else {
+        const error = new Error('token not active');
+        error.status = 401;
+        console.log(error);
+        return next(error);
+      }
+    }
+    socket.userId = decoded.id;
+    socket.join(decoded.id);
+    next();
+  });
+});
 io.on('connection', (socket) => {
   console.log('Ada client yang terhubung', socket.id);
-  socket.on('sendMsgToBack', (data) => {
-    // io.emit('sendMsgToFront', 'Hello Rico, Welcome to the Club')
-    // io.emit untuk ke semua user
-    socket.emit('sendMsgToFront', 'Hello Rico, Welcome to the Club');
-    // socket.broadcast.emit('sendMsgToFront', 'Hello Rico, Welcome to the Club') kirim ke dirinya sendiri
-    // broadcast untuk kirim ke semua user yang terknokesi kecuali user yang itu sendiri
+  console.log('User yang terhubung memiliki id ', socket.userId);
+  socket.on('sendMessage', ({ idReceiver, messageBody }, callback) => {
+    const dataMessage = {
+      senderId: socket.userId,
+      receiverId: idReceiver,
+      message: messageBody,
+      createdAt: new Date(),
+    };
+    callback({
+      ...dataMessage,
+      createdAt: moment(dataMessage.createdAt).format('LT'),
+    });
+    // simpan ke db
+    modelMessage.insertMessage(dataMessage).then(() => {
+      console.log('success');
+      socket.broadcast.to(idReceiver).emit('msgFromBackend', {
+        ...dataMessage,
+        createdAt: moment(dataMessage.createdAt).format('LT'),
+      });
+    });
   });
   socket.on('disconnect', () => {
-    console.log('Ada perangkat yang terputus', socket.id);
+    console.log('ada perangkat yang terputus dengan id ', socket.id);
   });
 });
 httpServer.listen(process.env.PORT, () => {
