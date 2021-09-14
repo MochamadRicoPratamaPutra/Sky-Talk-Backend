@@ -14,7 +14,10 @@ const route = require('./src/routes/index');
 const jwt = require('jsonwebtoken');
 const modelMessage = require('./src/models/message');
 //middleware
-app.use(cors());
+const setupCors = {
+  origin: `${process.env.TARGET_URL}`
+}
+app.use(cors(setupCors));
 app.use(morgan('dev'));
 app.get('/', (req, res) => {
   res.json({ message: 'success' });
