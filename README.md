@@ -42,3 +42,7 @@ Open .env file on your favorite code editor, and copy paste this code below :
 ## Contact
 
 My Email : mricopratamaputra@gmail.com
+
+Project Related:
+- [Frontend](https://github.com/MochamadRicoPratamaPutra/Sky-Talk-Frontend)
+- [Backend](https://github.com/MochamadRicoPratamaPutra/Sky-Talk-Backend)
