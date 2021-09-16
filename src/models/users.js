@@ -140,7 +140,7 @@ const getAllUser = (page, limit, column, search, sortBy, keyword) => {
           }
         });
       } else {
-        connection.query('SELECT * FROM user', (error, result) => {
+        connection.query('SELECT * FROM user where status = 1', (error, result) => {
           if (!error) {
             resolve(result);
           } else {
