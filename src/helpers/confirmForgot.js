@@ -1,15 +1,17 @@
 const nodemailer = require('nodemailer');
 function main(email) {
   const transporter = nodemailer.createTransport({
-    service: 'Gmail',
+    host: process.env.EMAIL_HOST,
+    port: process.env.EMAIL_PORT,
+    secure: process.env.EMAIL_SECURE,
     auth: {
-      user: 'ricoxxx007@gmail.com',
-      pass: 'cangcimeng007',
+      user: `${process.env.EMAIL_MAILER}`,
+      pass: `${process.env.EMAIL_PASSWORD}`,
     },
   });
   transporter
     .sendMail({
-      from: '"Circle!"<ricoxxx007@gmail.com>',
+      from: `"SkyTalk!"<${process.env.EMAIL_MAILER}>`,
       to: `${email}`,
       subject: 'Confirmation to change your password',
       html: `<h style:'margin-left:auto; margin-right:auto'>Click button below to change your password</h>
