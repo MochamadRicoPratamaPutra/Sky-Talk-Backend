@@ -7,6 +7,7 @@ const jwt = require('jsonwebtoken');
 const common = require('../helpers/common');
 const path = require('path');
 const confirmForgot = require('../helpers/confirmForgot');
+const cloudinary = require('../middlewares/cloudinary');
 
 const getAllUser = (req, res, next) => {
   const page = parseInt(req.query.page);
@@ -47,7 +48,7 @@ const getUserById = (req, res, next) => {
       next(errorMessage);
     });
 };
-const updateUser = (req, res, next) => {
+const updateUser = async (req, res, next) => {
   // const name = req.body.name
   // const price = req.body.price
   // const description =req.body.description
@@ -62,9 +63,16 @@ const updateUser = (req, res, next) => {
         phone: phone,
         bio: bio,
         username: username,
-        img: `${process.env.BASE_URL}/file/${req.file.filename}` || null,
+        // img: `${process.env.BASE_URL}/file/${req.file.filename}` || null,
         updatedAt: new Date(),
       };
+      if (req.file) {
+        data.img = req.file;
+        const uploader = async (path) => await cloudinary.uploads(path, 'Vehicle Rental');
+        const { path } = data.img;
+        const newPath = await uploader(path);
+        data.img = newPath.url;
+      }
       userModel
         .updateUser(id, data)
         .then(() => {
