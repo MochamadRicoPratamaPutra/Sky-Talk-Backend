@@ -214,7 +214,7 @@ const register = async (req, res, next) => {
         email: email,
         password: hash,
         phone: phone,
-        role: role,
+        role: 'user',
         bio: bio,
         username: username,
         // profilePicture: `${process.env.BASE_URL}/file/${req.file.filename}`,
