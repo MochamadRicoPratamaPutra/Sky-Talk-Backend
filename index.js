@@ -79,12 +79,12 @@ io.on('connection', (socket) => {
       senderId: socket.userId,
       receiverId: idReceiver,
       message: messageBody,
-      // createdAt: new Date(),
+      createdAt: new Date(),
     };
     const datenow = new Date();
     callback({
       ...dataMessage,
-      createdAt: moment(datenow).format('LT'),
+      createdAt: moment(datenow).tz("Asia/Jakarta").format('LT'),
       // createdAt: moment(dataMessage.createdAt).format('LT'),
     });
     // simpan ke db
@@ -92,7 +92,7 @@ io.on('connection', (socket) => {
       console.log('success');
       socket.broadcast.to(idReceiver).emit('msgFromBackend', {
         ...dataMessage,
-        createdAt: moment(datenow).format('LT'),
+        createdAt: moment(datenow).tz("Asia/Jakarta").format('LT'),
         // createdAt: moment(dataMessage.createdAt).format('LT'),
       });
     });
