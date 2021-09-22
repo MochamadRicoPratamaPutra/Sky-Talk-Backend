@@ -9,7 +9,7 @@ const httpServer = http.createServer(app);
 const createError = require('http-errors');
 const moment = require('moment');
 moment.locale('id');
-const cookieParser = require('cookie-parser');
+// const cookieParser = require('cookie-parser');
 const route = require('./src/routes/index');
 const jwt = require('jsonwebtoken');
 const modelMessage = require('./src/models/message');
@@ -36,7 +36,6 @@ app.use((err, req, res, next) => {
     message: err.message,
   });
 });
-
 //socket
 const option = {
   cors: {
@@ -79,12 +78,12 @@ io.on('connection', (socket) => {
       senderId: socket.userId,
       receiverId: idReceiver,
       message: messageBody,
-      createdAt: new Date(),
+      // createdAt: new Date(),
     };
-    const datenow = new Date();
+    const datenow = new Date().toLocaleString("en-US", {timeZone: "Asia/Jakarta"});
     callback({
       ...dataMessage,
-      createdAt: moment(datenow).tz("Asia/Jakarta").format('LT'),
+      createdAt: moment(datenow).format('LT'),
       // createdAt: moment(dataMessage.createdAt).format('LT'),
     });
     // simpan ke db
@@ -92,7 +91,7 @@ io.on('connection', (socket) => {
       console.log('success');
       socket.broadcast.to(idReceiver).emit('msgFromBackend', {
         ...dataMessage,
-        createdAt: moment(datenow).tz("Asia/Jakarta").format('LT'),
+        createdAt: moment(datenow).format('LT'),
         // createdAt: moment(dataMessage.createdAt).format('LT'),
       });
     });
