@@ -15,8 +15,8 @@ const jwt = require('jsonwebtoken');
 const modelMessage = require('./src/models/message');
 //middleware
 const setupCors = {
-  origin: `${process.env.TARGET_URL}`
-}
+  origin: `${process.env.TARGET_URL}`,
+};
 app.use(cors(setupCors));
 app.use(morgan('dev'));
 app.get('/', (req, res) => {
@@ -79,18 +79,21 @@ io.on('connection', (socket) => {
       senderId: socket.userId,
       receiverId: idReceiver,
       message: messageBody,
-      createdAt: new Date(),
+      // createdAt: new Date(),
     };
+    const datenow = new Date();
     callback({
       ...dataMessage,
-      createdAt: moment(dataMessage.createdAt).format('LT'),
+      createdAt: moment(datenow).format('LT'),
+      // createdAt: moment(dataMessage.createdAt).format('LT'),
     });
     // simpan ke db
     modelMessage.insertMessage(dataMessage).then(() => {
       console.log('success');
       socket.broadcast.to(idReceiver).emit('msgFromBackend', {
         ...dataMessage,
-        createdAt: moment(dataMessage.createdAt).format('LT'),
+        createdAt: moment(datenow).format('LT'),
+        // createdAt: moment(dataMessage.createdAt).format('LT'),
       });
     });
   });
